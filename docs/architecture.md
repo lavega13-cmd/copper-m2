@@ -82,3 +82,33 @@ When a module changes how the app fits together, add a section here:
 **Risks and open questions:** cost, privacy, accuracy or safety risks, and how
 you handle them.
 ```
+
+## Module 2: Ask Copper
+
+**Summary:** a floating chat panel on the landing page that answers price,
+total and stock questions by calling four read-only tools instead of guessing,
+and draws every step (tools on offer, thinking, each tool call, the reply) as
+it streams in.
+
+| Piece | Where | What it does |
+|---|---|---|
+| Page / route | `app/page.tsx` | Still one page. Calls `isAiConfigured()` and passes it to the panel; no new routes |
+| Components | `components/copper/ask-copper.tsx`, `components/copper/site-header.tsx` | The launcher, the `Sheet` panel, the station rail and tool cards; the header's `#ask` link |
+| Server Action | `lib/copper/assistant/ask.ts` | `askCopper({ messages, useTools })` returns `{ progress }` at once, then streams a `Progress` through `lib/ai/live.ts` |
+| Tools | `lib/copper/assistant/tools.ts` | `get_products`, `get_prices`, `calculate_cost`, `check_availability`, with zod input contracts |
+| Data | `lib/copper/data/catalog.json`, `lib/copper/data/inventory.json` | Prices from the catalog; stock read fresh from the stock list on every call |
+| AI calls | `lib/ai/call.ts` (module 2, `ask-copper`) | Gemini 2.5 Flash by default via `callStream`, with thought summaries; up to 5 steps with tools on. A fraction of a cent per question |
+
+**Data flow:** shopper asks → panel calls `askCopper()` → `callStream` sends
+the conversation (plus instructions and tools when Use tools is on) → the model
+asks for a tool → `tools.ts` reads the catalog or stock list → the result goes
+back to the model → each stream part updates `Progress` → the panel redraws.
+
+**Decisions and trade-offs:** a Server Action with a live value instead of an
+API route keeps the site a single page. Tools on and tools off are separate
+chats so the tools-off model can't copy an answer the tools worked out. With
+tools off, no instructions are sent, so the comparison is the bare model.
+
+**Risks and open questions:** the model can still pick the wrong inputs (the
+tool card makes that visible); stock is only as current as the stock list;
+the tools only read, so nothing can be bought or changed from the chat.
