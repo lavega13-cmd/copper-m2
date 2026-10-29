@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { Logo } from "@/components/copper/logo";
 import { ModeToggle } from "@/components/copper/mode-toggle";
+import { cn } from "@/lib/utils";
 
-const LINKS = [
+// The floating launcher covers Ask Copper on phones, so its header link shows
+// from the sm breakpoint up and the header still fits a 375px screen.
+const LINKS: { href: string; label: string; className?: string }[] = [
   { href: "#products", label: "Products" },
   { href: "#plus", label: "Copper Plus" },
   { href: "#privacy", label: "Privacy" },
+  { href: "#ask", label: "Ask Copper", className: "hidden sm:inline" },
 ];
 
 export function SiteHeader() {
@@ -23,7 +27,10 @@ export function SiteHeader() {
             <a
               key={link.href}
               href={link.href}
-              className="text-foreground/80 hover:text-primary rounded-md px-1 py-1 text-sm font-medium whitespace-nowrap transition-colors sm:px-2"
+              className={cn(
+                "text-foreground/80 hover:text-primary rounded-md px-1 py-1 text-sm font-medium whitespace-nowrap transition-colors sm:px-2",
+                link.className,
+              )}
             >
               {link.label}
             </a>
